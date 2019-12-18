@@ -1,0 +1,27 @@
+{
+    "appName": "PocketServer",
+    "authors": "",
+    "mainClass": "main",
+    "infos": "",
+    "version": "1",
+    "License": "MIT",
+    "packageName": "yt.pylott.pocketserver",
+    "CompilationTarget": {
+        "MACOS": [
+            "10.9.*",
+            "10.10.*",
+            "10.11.*",
+            "10.12.*",
+            "10.13.*",
+            "10.14.*"
+        ],
+        "WINDOWS": [
+            "7.*",
+            "8.*",
+            "10.*"
+        ],
+        "LINUX": [
+            "*"
+        ]
+    }
+}
