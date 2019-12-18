@@ -29,6 +29,8 @@ Or
 
 To have the previous outputs.
 
+Default access: http://localhost:8086
+
 ## Known issues
 
 When you stop the server you will have to wait a bit before restarting it.
