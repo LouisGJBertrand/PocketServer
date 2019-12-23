@@ -3,7 +3,7 @@
     class headerConstructor
     {
         
-        public function generate($resp, stdClass $ress, stdClass $server, int $rescode = 200, string $headers = "")
+        public function generate($resp, stdClass $ress, stdClass $server, int $rescode = 200, string $headers = "", $gzipCompress = 0)
         {
 
             if (gettype($resp) == "null") {
@@ -11,7 +11,17 @@
             }
 
             // MESSAGE DECLARATION
-            $ress->msg = $resp->msg;
+            // print(gettype($resp));
+            // return 0;
+            if (gettype($resp->msg) == "object") {
+                $resp->msg->parse();
+                $ress->msg = $resp->msg->parsed;
+            } else {
+                $ress->msg = $resp->msg;
+            }
+            // print_r($ress->msg);
+            // return 0;
+
             $ress->contentType = $resp->contentType;
             $ress->msglen = strlen($ress->msg);
             
@@ -25,10 +35,20 @@
             $ress->str .= "Date: ".date("r").PHP_EOL;
             $ress->str .= "Server: PocketServer/1.0 (BETA)".PHP_EOL;
             $ress->str .= "Content-Lenght: ".$ress->msglen.PHP_EOL;
-            $ress->str .= "Connection: Closed".PHP_EOL;
-            $ress->str .= "Content-Type: ".$ress->contentType."; charset=UTF-8".PHP_EOL;
-            $ress->str .= PHP_EOL.PHP_EOL;
-            $ress->str .= $ress->msg;
+            $ress->str .= "Connection: Keep-Alive".PHP_EOL;
+            $ress->str .= "Keep-Alive: timeout=5, max=1000".PHP_EOL;
+            $ress->str .= "Content-Type: ".$ress->contentType."".PHP_EOL;
+            $ress->str .= "Content-Disposition: inline".PHP_EOL;
+            if($gzipCompress != 0){
+                $ress->str .= "Content-Encoding: gzip".PHP_EOL;
+            }
+            $ress->str .= PHP_EOL;
+            if($gzipCompress != 0){
+                // gzcompress('Compresse moi', 1)
+                $ress->str .= gzcompress($ress->msg);
+            } else {
+                $ress->str .= $ress->msg;
+            }
             $ress->len = strlen($ress->str);
 
             $ress->code = $rescode;

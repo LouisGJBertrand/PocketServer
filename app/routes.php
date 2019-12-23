@@ -11,7 +11,7 @@
             $this->routes = new stdClass;
         }
 
-        public function GET($request)
+        public function GET($request, $gzipCompress)
         {
   
             // var_dump($this->routes->get);
@@ -29,7 +29,7 @@
                     $str->code = 404;
                 }
             }
-            $response = headerConstructor::generate($str,new stdClass,$this->server,$str->code,$str->headers);
+            $response = headerConstructor::generate($str,new stdClass,$this->server,$str->code,$str->headers, $gzipCompress);
             // var_dump($response);
 
             return $response;

@@ -15,12 +15,11 @@
     |
     */
 
-
-
     use STDio\stdio;
 
     require "RequestParser.php";
     require "routes.php";
+    require "views.php";
     require "headerConstructor.php";
 
     /**
@@ -41,6 +40,7 @@
             $this->socket = socket_create(AF_INET, SOCK_STREAM, getprotobyname('tcp'));
             $this->server = new stdClass;
             $this->server->name = '127.0.0.1';
+            // $this->server->name = '172.20.10.3';
             $this->server->port = 8086;
             $a = 0;
             $max = 5;
@@ -57,33 +57,11 @@
 
             // ROUTE DECLARATION
             $this->server->connections = 0;
-            $this->routes = new routes($this->server);
-            $this->routes->newRoute("/",function () {
-                $ress = new stdClass;
-                $ress->msg = "";
-                $ress->contentType = "text/html";
-                $ress->code = 301;
-                $ress->headers = "Location: /home";
-                return $ress;
-            });
-            $this->routes->newRoute("/home",function (){
-                $ress = new stdClass;
-                $ress->msg = "<h1>Hello, World!</h1>";
-                $ress->code = 200;
-                $ress->contentType = "text/html";
-                $ress->headers = "";
-                return $ress;
-            });
-            $this->routes->newRoute("HTTPCOMMONERR404",function (){
-                $ress = new stdClass;
-                $ress->msg = "<h1>404 Not Found</h1>";
-                $ress->code = 404;
-                $ress->contentType = "text/html";
-                $ress->headers = "";
-                return $ress;
-            });
+            global $views;
+            $views = $this->views = require "data/views.php";
+            $this->routes = require 'data/routes.php';
 
-            stdio::cout("server Started!");
+            stdio::cout("server Listening on http://".$this->server->name.":".$this->server->port);
 
             return true;
         }
@@ -104,11 +82,18 @@
 
             while(!$user = socket_accept($this->socket));
 
+            $startReading = microtime(true);
             $query = socket_read($user,25565);
             // print_r($request);
             // return;
-            if(!socket_getpeername($user,$remoteAddr,$remotePort)){ return false; }
+            if(!socket_getpeername($user,$remoteAddr,$remotePort)){ 
+                $stopReading = microtime(true);
+                $totalRequestTime = $stopReading - $startReading;
+                print PHP_EOL.PHP_EOL."total request time = $totalRequestTime\r\n".'SOCKET ERROR : '.socket_last_error($this->socket).PHP_EOL.PHP_EOL;
+                return false;
+            }
 
+            $startComputing = microtime(true);
             $reqPars = new RequestParser($query);
             $request = $reqPars->request();
 
@@ -118,18 +103,41 @@
             // return 0;
 
             $method = $request["method"];
-            $response = $this->routes->$method($request); 
+            // if (isset($reqPars->requestParsed["Accept-Encoding:"])) {
+            //     if (in_array('gzip',$reqPars->requestParsed["Accept-Encoding:"])||in_array('gzip,',$reqPars->requestParsed["Accept-Encoding:"])) {
+            //         $gzipCompress = 1;
+            //     } else {
+            //         $gzipCompress = 0;
+            //     }
+            // } else {
+            //     $gzipCompress = 0;
+            // }
+
+            $gzipCompress = 0;
+
+            // print_r($gzipCompress);
+            // return 0;
+            $response = $this->routes->$method($request,$gzipCompress); 
+            $stopComputing = microtime(true);
             
+            $startOutputing = microtime(true);
             if ($response) {
                 $socketW = socket_sendto($user, $response->str, $response->len, 0, $remoteAddr, $remotePort);
                 if ($socketW){
+                    $stopOutputing = microtime(true);
+
+                    $totalRequestTime = $stopOutputing - $startReading;
+                    $totalRequestAcquisitionTime = $stopReading - $startReading;
+                    $totalRequestComputationTime = $stopComputing - $startComputing;
+                    $totalRequestOutputationTime = $stopOutputing - $startOutputing;
+
                     $this->server->connections++;
-                    stdio::cout($this->server->connections.":".$socketW." -> (".$response->code.") q:".$request["query"]); 
+                    stdio::cout($this->server->connections.":".round($socketW*1e-6/$totalRequestTime,2)."Mo/s -> (".$response->code.") q:".$request["query"]); 
                     usleep(10000);
                     return true;
                 }
             }
-            throw socket_last_error($this->socket);
+            print PHP_EOL.PHP_EOL.'SOCKET ERROR : '.socket_last_error($this->socket).PHP_EOL.PHP_EOL;
             // var_dump($socketW);
             return false;
         }
