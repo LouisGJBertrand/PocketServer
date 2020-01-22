@@ -10,7 +10,11 @@
     <body>
         <h1><?php
 
-            echo "Hello, World!";
+            if (isset($argv[1])) {
+                echo "Hello, ".$argv[1]."!";
+            } else {
+                echo "Hello, World!";
+            }
 
         ?></h1>
         <p>This page is the proof that the server - entirely coded in php - is capable of parsing PHP.</p>

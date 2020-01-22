@@ -14,7 +14,7 @@
             // print(gettype($resp));
             // return 0;
             if (gettype($resp->msg) == "object") {
-                $resp->msg->parse();
+                if(!$resp->msg->parse()){return false;}
                 $ress->msg = $resp->msg->parsed;
             } else {
                 $ress->msg = $resp->msg;
@@ -34,11 +34,11 @@
             $ress->str .= "Host: ".$server->name.":".$server->port.PHP_EOL;
             $ress->str .= "Date: ".date("r").PHP_EOL;
             $ress->str .= "Server: PocketServer/1.0 (BETA)".PHP_EOL;
-            $ress->str .= "Content-Lenght: ".$ress->msglen.PHP_EOL;
-            $ress->str .= "Connection: Keep-Alive".PHP_EOL;
-            $ress->str .= "Keep-Alive: timeout=5, max=1000".PHP_EOL;
             $ress->str .= "Content-Type: ".$ress->contentType."".PHP_EOL;
             $ress->str .= "Content-Disposition: inline".PHP_EOL;
+            $ress->str .= "Content-Lenght: ".$ress->msglen.PHP_EOL;
+            $ress->str .= "Connection: Keep-Alive".PHP_EOL;
+            $ress->str .= "Keep-Alive: timeout=100, max=1000".PHP_EOL;
             if($gzipCompress != 0){
                 $ress->str .= "Content-Encoding: gzip".PHP_EOL;
             }

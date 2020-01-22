@@ -16,6 +16,8 @@
     */
 
     use STDio\stdio;
+    use Gui\Application;
+    use Gui\Components\Button;
 
     require "RequestParser.php";
     require "routes.php";
@@ -63,6 +65,31 @@
 
             stdio::cout("server Listening on http://".$this->server->name.":".$this->server->port);
 
+            global $argv;
+            foreach ($argv as $key => $value) {
+                // if ($value == "-GUI") {
+                    //     $this->server->gui = true;
+                    //     $application = new Application();
+                    //     $application->on('start', function() use ($application) {
+                    //         $button = (new Button())
+                    //             ->setLeft(40)
+                    //             ->setTop(100)
+                    //             ->setWidth(200)
+                    //             ->setValue('Look, I\'m a button!');
+                        
+                    //         $button->on('click', function() use ($button) {
+                    //             $button->setValue('Look, I\'m a clicked button!');
+                    //         });
+                    //     });
+                    //     $application->run();
+                    //     $this->server->application = $application;
+                    // } else {
+                    //     $this->server->gui = false;
+                    // }
+                //
+                
+            }
+
             return true;
         }
 
@@ -93,10 +120,15 @@
                 return false;
             }
 
-            $startComputing = microtime(true);
+            $stopReading = $startComputing = microtime(true);
             $reqPars = new RequestParser($query);
             $request = $reqPars->request();
 
+            if(isset($request["params"])){
+                // print("PARAMS : ");
+                // var_dump($request["params"]);
+                $params = $request["params"];
+            }
             // var_dump($query);
 
             // var_dump($request);
@@ -117,12 +149,25 @@
 
             // print_r($gzipCompress);
             // return 0;
-            $response = $this->routes->$method($request,$gzipCompress); 
-            $stopComputing = microtime(true);
+
+            $authorizedMethods = ["GET","POST"];
+
+            $response = $this->routes->$method($request,$gzipCompress,$params); 
+            $stopComputing = \microtime(true);
             
-            $startOutputing = microtime(true);
+            if ($response->msglen >= 1023)
+            {
+                
+            }
+
+            $startOutputing = \microtime(true);
             if ($response) {
-                $socketW = socket_sendto($user, $response->str, $response->len, 0, $remoteAddr, $remotePort);
+
+                // \print_r($response->len);
+                // return 0;
+
+                // $socketW = socket_sendto($user, $response->str, $response->len+1, 0, $remoteAddr, $remotePort);
+                $socketW = socket_write($user, $response->str, $response->len);
                 if ($socketW){
                     $stopOutputing = microtime(true);
 
@@ -137,7 +182,7 @@
                     return true;
                 }
             }
-            print PHP_EOL.PHP_EOL.'SOCKET ERROR : '.socket_last_error($this->socket).PHP_EOL.PHP_EOL;
+            print PHP_EOL.PHP_EOL.'SOCKET ERROR : '.socket_strerror(socket_last_error($this->socket)).PHP_EOL.PHP_EOL;
             // var_dump($socketW);
             return false;
         }

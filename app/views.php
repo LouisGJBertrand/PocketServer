@@ -15,14 +15,14 @@
             $this->routes = [];
         }
 
-        public function parse($path)
+        public function parse($path, $params)
         {
             
             $response = "";
             if ($this->views[$path]->filetype == "ActionPHP") {
 
                 $fp = __DIR__.'/data/'.$this->views[$path]->filepath;
-                $parser = new ActionPHP($fp);
+                $parser = new ActionPHP($fp, $params);
                 // if ($parser->parse()) {
                 //     $response = $parser->parsed;
                 // }
